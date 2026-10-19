@@ -10,10 +10,10 @@ function renderStatus(s){status=s;const running=!!s.running;if(!s.monitor)$('mon
  updateConsole(s);
  if(!busy)for(const select of document.querySelectorAll('[id^="slot-"]'))if(document.activeElement!==select)select.value=s.plugins?.[select.id.slice(5)]?.path||'';
 }
-// Prefer the low-latency driver for each platform: CoreAudio on macOS, ASIO on Windows.
+// Prefer the low-latency driver for each platform: CoreAudio on macOS, ASIO on Windows, ALSA on Linux (JACK when a JACK/PipeWire server is running).
 let deviceTypes=[];
 function fillDevices(){const type=deviceTypes.find(t=>t.name===$('device-type').value)||deviceTypes[0];for(const [id,values]of [['input-device',type?.inputs||[]],['output-device',type?.outputs||[]]]){const old=$(id).value;$(id).replaceChildren(new Option('System default',''),...(id==='input-device'?[new Option('No input (piano only)','__none__')]:[]),...values.map(s=>new Option(s,s)));$(id).value=old;}}
-async function refresh(){const data=await command({op:'devices'});deviceTypes=data.types;const old=$('device-type').value;$('device-type').replaceChildren(...data.types.map(t=>new Option(t.name,t.name)));const preferred=['CoreAudio','ASIO','Windows Audio (Low Latency Mode)','Windows Audio'].find(n=>data.types.some(t=>t.name===n));$('device-type').value=data.types.some(t=>t.name===old)?old:(preferred||data.types[0]?.name||'');fillDevices();$('midi-input').replaceChildren(new Option('All connected inputs',''),...data.midi.map(d=>new Option(d.name,d.id)));}
+async function refresh(){const data=await command({op:'devices'});deviceTypes=data.types;const old=$('device-type').value;$('device-type').replaceChildren(...data.types.map(t=>new Option(t.name,t.name)));const preferred=['CoreAudio','ASIO','Windows Audio (Low Latency Mode)','Windows Audio','ALSA','JACK'].find(n=>data.types.some(t=>t.name===n));$('device-type').value=data.types.some(t=>t.name===old)?old:(preferred||data.types[0]?.name||'');fillDevices();$('midi-input').replaceChildren(new Option('All connected inputs',''),...data.midi.map(d=>new Option(d.name,d.id)));}
 $('device-type').onchange=fillDevices;
 $('start').onclick=()=>action(()=>command({op:'start',type:$('device-type').value,input:$('input-device').value,output:$('output-device').value,rate:Number($('sample-rate').value),buffer:Number($('buffer').value)}),'Audio running. Enable headphone monitoring when ready.');
 $('stop').onclick=()=>action(()=>command({op:'stop'}),'Audio stopped.');

@@ -1,4 +1,4 @@
-# Performer Studio desktop app (macOS and Windows)
+# Performer Studio desktop app (Windows, macOS and Linux)
 
 Performer Studio is an optional desktop app for the performer. It has two tabs that keep running side by side:
 
@@ -9,7 +9,15 @@ Performer Studio is an optional desktop app for the performer. It has two tabs t
 
 The master output feeds the live stream and recording directly. No virtual audio cable or loopback device is needed.
 
-Status: **0.1 preview.** The macOS Apple Silicon build is tested with Pianoteq 9 and UADx plug-ins. The Windows x64 build adds ASIO, Windows Audio (WASAPI) and DirectSound support, but it has not yet been tested on Windows hardware. Please report issues.
+Status: **0.1 preview.** The macOS Apple Silicon build is tested with Pianoteq 9 and UADx plug-ins. The Windows x64 build (ASIO, Windows Audio/WASAPI, DirectSound) and the Linux x64 build (ALSA, JACK/PipeWire) are built automatically but not yet tested on real hardware. Please report issues.
+
+## Install
+
+Download the file for your system from the [Releases page](https://github.com/mtyas/3D-Piano-Performances/releases). The preview builds are not code-signed:
+
+- **Windows:** unzip and run `Performer Studio.exe`. If SmartScreen says *Windows protected your PC*, click **More info → Run anyway**.
+- **macOS (Apple Silicon):** unzip, then run `xattr -dr com.apple.quarantine "Performer Studio.app"` once (or right-click the app → **Open**).
+- **Linux (x64):** extract the `.tar.gz` and run `./performer-studio`. If it stops with a *SUID sandbox helper* message, run `sudo chown root:root chrome-sandbox && sudo chmod 4755 chrome-sandbox` in that folder.
 
 ## Signal flow
 
@@ -25,7 +33,7 @@ Plug-in latency is compensated between branches. The audio callback never waits 
 
 ## Using it
 
-1. **Mixer → Driver:** choose the audio driver. On macOS that is **CoreAudio**. On Windows, use **ASIO** when your interface has an ASIO driver (lowest latency); otherwise use **Windows Audio** or **Windows Audio (Low Latency Mode)**.
+1. **Mixer → Driver:** choose the audio driver. On macOS that is **CoreAudio**. On Windows, use **ASIO** when your interface has an ASIO driver (lowest latency); otherwise use **Windows Audio** or **Windows Audio (Low Latency Mode)**. On Linux, use **ALSA**, or **JACK** when a JACK or PipeWire-JACK server is running.
 2. Choose the input and output device, the sample rate and the buffer size. Start at 48 kHz / 256 samples. Choose **No input (piano only)** if you don't use a microphone.
 3. Load your instrument (for example Pianoteq) in the piano slot, and choose your MIDI keyboard.
 4. Optionally add effects: a channel strip on the microphone, a reverb on **Aux 1** (set it to 100 % wet in its editor, opened with ↗, then raise each channel's Aux 1 send), and a bus compressor on the master.
@@ -39,6 +47,7 @@ Plug-ins are listed from the standard VST3 folders:
 
 - macOS: `/Library/Audio/Plug-Ins/VST3` and `~/Library/Audio/Plug-Ins/VST3`
 - Windows: `C:\Program Files\Common Files\VST3` and `%LOCALAPPDATA%\Programs\Common\VST3`
+- Linux: `~/.vst3`, `/usr/lib/vst3` and `/usr/local/lib/vst3`
 
 Plug-ins run in a separate audio-engine process. If a plug-in crashes, audio stops but the app stays open; relaunch the app to restart audio.
 
@@ -71,6 +80,22 @@ python package-win.py           # -> dist\Performer Studio\ and dist\Performer-S
 ```
 
 Run `dist\Performer Studio\Performer Studio.exe`. The build is unsigned, so Windows SmartScreen may warn on first launch. ASIO support uses the ASIO interface headers bundled with JUCE 8.
+
+### Linux (x64)
+
+Requirements (Debian/Ubuntu names): `build-essential cmake python3 unzip libasound2-dev libjack-jackd2-dev libfreetype-dev libfontconfig1-dev libx11-dev libxcomposite-dev libxcursor-dev libxext-dev libxinerama-dev libxrandr-dev libxrender-dev libgl1-mesa-dev`.
+
+```bash
+cd desktop-performer
+python3 fetch-deps.py
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release -j 6
+python3 package-linux.py        # -> dist/Performer-Studio/ and dist/Performer-Studio-0.1.0-linux-x64.tar.gz
+```
+
+### Automated release builds
+
+`.github/workflows/release.yml` runs the tests and builds all three platforms plus a server bundle on GitHub's machines. Pushing a tag such as `v0.2.0` (with release notes in `.github/release-notes/v0.2.0.md`) publishes a GitHub release with the downloads and a `SHA256SUMS.txt`.
 
 ### Tests
 

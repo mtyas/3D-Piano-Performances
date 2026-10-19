@@ -13,6 +13,10 @@ target_compile_definitions(PerformerAudio PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CU
 if(APPLE)
     target_compile_definitions(PerformerAudio PRIVATE JUCE_PLUGINHOST_AU=1)
 endif()
+if(UNIX AND NOT APPLE)
+    # ALSA is built in; JACK also covers PipeWire's JACK interface.
+    target_compile_definitions(PerformerAudio PRIVATE JUCE_ALSA=1 JUCE_JACK=1)
+endif()
 if(WIN32)
     # JUCE 8 bundles the ASIO interface headers (see its ASIO LICENSE.txt).
     target_compile_definitions(PerformerAudio PRIVATE JUCE_ASIO=1 JUCE_WASAPI=1 JUCE_DIRECTSOUND=1)

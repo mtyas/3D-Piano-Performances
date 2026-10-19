@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Package the compiled host and Electron runtime into one locally signed app."""
 from pathlib import Path
-import shutil, plistlib, subprocess, json, hashlib
+import shutil, plistlib, subprocess, json, hashlib, os
+version=os.environ.get('PERFORMER_VERSION','0.1.0')
 root=Path(__file__).resolve().parent
 app=root/'dist'/'Performer Studio.app'
 source=root/'vendor/electron/Electron.app'
@@ -26,12 +27,12 @@ shutil.copy2(root/'shell/performer.icns',resources/'performer.icns')
 shutil.copytree(engine,resources/'native/Performer Audio Engine.app',symlinks=True)
 plist=app/'Contents/Info.plist'
 info=plistlib.loads(plist.read_bytes())
-info.update(CFBundleIconFile='performer.icns',CFBundleDisplayName='Performer Studio',CFBundleName='Performer Studio',CFBundleIdentifier='org.pianoperformances.studio',CFBundleVersion='0.1.0',CFBundleShortVersionString='0.1.0',NSMicrophoneUsageDescription='Use your selected microphone in the performer mixer.',NSCameraUsageDescription='Track your performance using your selected webcams.',NSHighResolutionCapable=True)
+info.update(CFBundleIconFile='performer.icns',CFBundleDisplayName='Performer Studio',CFBundleName='Performer Studio',CFBundleIdentifier='org.pianoperformances.studio',CFBundleVersion=version,CFBundleShortVersionString=version,NSMicrophoneUsageDescription='Use your selected microphone in the performer mixer.',NSCameraUsageDescription='Track your performance using your selected webcams.',NSHighResolutionCapable=True)
 plist.write_bytes(plistlib.dumps(info))
 helper=resources/'native/Performer Audio Engine.app/Contents/Info.plist'
 info=plistlib.loads(helper.read_bytes());info['LSUIElement']=True;helper.write_bytes(plistlib.dumps(info))
 subprocess.run(['codesign','--force','--deep','--sign','-',str(app)],check=True)
 subprocess.run(['codesign','--verify','--deep','--strict',str(app)],check=True)
-receipt={'version':'0.1.0','architecture':'arm64','signing':'local ad-hoc; not notarized','app':str(app),'juce':'8.0.12','electron':'44.9.0','performerScriptSHA256':hashlib.sha256((resources/'app/assets/app.js').read_bytes()).hexdigest()}
+receipt={'version':version,'architecture':'arm64','signing':'local ad-hoc; not notarized','app':str(app),'juce':'8.0.12','electron':'44.9.0','performerScriptSHA256':hashlib.sha256((resources/'app/assets/app.js').read_bytes()).hexdigest()}
 (root/'dist/build-receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
 print(app)

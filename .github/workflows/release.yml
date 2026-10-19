@@ -1,0 +1,125 @@
+# Builds Performer Studio for Windows, macOS and Linux plus a server bundle.
+# Pushing a tag such as v0.1.0 publishes a GitHub release with all downloads;
+# running it manually (Actions → Release → Run workflow) only builds the artifacts.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: python -m pip install -r requirements.txt
+      - run: python -m unittest discover -s tests -v
+      - run: node tests/replay-timing.mjs && node tests/stage-asset-cache.mjs
+      - run: node --test desktop-performer/tests/audio-protocol.test.cjs
+
+  desktop:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: windows-2022, platform: windows}
+          - {os: macos-14, platform: macos}
+          - {os: ubuntu-22.04, platform: linux}
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: desktop-performer
+    env:
+      PERFORMER_VERSION: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || '0.0.0-dev' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Normalise version
+        shell: bash
+        run: echo "PERFORMER_VERSION=${PERFORMER_VERSION#v}" >> "$GITHUB_ENV"
+      - name: Install Linux build dependencies
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libasound2-dev libjack-jackd2-dev \
+            libfreetype-dev libfontconfig1-dev libx11-dev libxcomposite-dev libxcursor-dev \
+            libxext-dev libxinerama-dev libxrandr-dev libxrender-dev libgl1-mesa-dev unzip
+      - name: Fetch pinned JUCE and Electron
+        run: python fetch-deps.py
+      - name: Configure (Windows)
+        if: matrix.platform == 'windows'
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+      - name: Configure (macOS / Linux)
+        if: matrix.platform != 'windows'
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build audio engine
+        run: cmake --build build --config Release --parallel 4
+      - name: Package (Windows)
+        if: matrix.platform == 'windows'
+        run: python package-win.py
+      - name: Package (macOS)
+        if: matrix.platform == 'macos'
+        run: |
+          python package-mac.py
+          ditto -c -k --sequesterRsrc --keepParent "dist/Performer Studio.app" "dist/Performer-Studio-${PERFORMER_VERSION}-macos-arm64.zip"
+      - name: Package (Linux)
+        if: matrix.platform == 'linux'
+        run: python package-linux.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: performer-studio-${{ matrix.platform }}
+          path: |
+            desktop-performer/dist/*.zip
+            desktop-performer/dist/*.tar.gz
+          if-no-files-found: error
+
+  server:
+    needs: test
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bundle the stage server
+        run: |
+          version="${GITHUB_REF_NAME#v}"; [[ "$GITHUB_REF" == refs/tags/v* ]] || version=0.0.0-dev
+          name="3D-Piano-Performances-server-${version}"
+          mkdir -p "dist/$name"
+          cp -R server.py archive_manager.py requirements.txt index.html app.js archive-admin.html archive-admin.js \
+            performance-motion.js replay-timing.js stage-direction.js fingertip-contact.js \
+            concert_stage.glb rig_calibration.json setup deploy docs README.md SECURITY.md LICENSE "dist/$name/"
+          (cd dist && zip -qr "$name.zip" "$name")
+      - uses: actions/upload-artifact@v4
+        with:
+          name: server
+          path: dist/*.zip
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [desktop, server]
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: assets
+          merge-multiple: true
+      - name: Checksums
+        run: cd assets && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: 3D Piano Performances ${{ github.ref_name }}
+          body_path: .github/release-notes/${{ github.ref_name }}.md
+          prerelease: ${{ startsWith(github.ref_name, 'v0.') }}
+          files: assets/*

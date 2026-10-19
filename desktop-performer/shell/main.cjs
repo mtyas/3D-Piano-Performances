@@ -31,6 +31,7 @@ function pluginFolders(){
   const common=process.env.CommonProgramFiles||'C:\\Program Files\\Common Files';
   return [path.join(common,'VST3'),path.join(process.env.LOCALAPPDATA||path.join(app.getPath('home'),'AppData','Local'),'Programs','Common','VST3')];
  }
+ if(process.platform==='linux')return [path.join(app.getPath('home'),'.vst3'),'/usr/lib/vst3','/usr/local/lib/vst3'];
  return ['/Library/Audio/Plug-Ins/VST3',path.join(app.getPath('home'),'Library/Audio/Plug-Ins/VST3')];
 }
 function listPlugins(){
@@ -44,6 +45,7 @@ function listPlugins(){
 }
 function enginePaths(){
  if(process.platform==='win32')return [path.join(process.resourcesPath,'native','Performer Audio Engine.exe'),path.resolve(root,'../build/PerformerAudio_artefacts/Release/Performer Audio Engine.exe')];
+ if(process.platform==='linux')return [path.join(process.resourcesPath,'native','Performer Audio Engine'),path.resolve(root,'../build/PerformerAudio_artefacts/Release/Performer Audio Engine')];
  return [path.join(process.resourcesPath,'native','Performer Audio Engine.app','Contents','MacOS','Performer Audio Engine'),path.resolve(root,'../build/PerformerAudio_artefacts/Release/Performer Audio Engine.app/Contents/MacOS/Performer Audio Engine')];
 }
 function startEngine(){

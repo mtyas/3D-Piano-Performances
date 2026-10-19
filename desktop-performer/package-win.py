@@ -4,11 +4,11 @@
 Run on Windows after `python fetch-deps.py` and a Release build of the native engine.
 """
 from pathlib import Path
-import hashlib, json, shutil
+import hashlib, json, os, shutil
 
 root = Path(__file__).resolve().parent
 manifest = json.loads((root / 'dependencies.json').read_text())
-version = '0.1.0'
+version = os.environ.get('PERFORMER_VERSION', '0.1.0')
 performer = (root / manifest['performerSource']).read_bytes()
 assert hashlib.sha256(performer).hexdigest() == manifest['performerSHA256'], 'Performer snapshot differs from the pinned integration source.'
 (root / 'shell/assets').mkdir(exist_ok=True)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Download the pinned JUCE and Electron archives, verify their SHA-256 and extract them into vendor/.
 
-Usage: python3 fetch-deps.py            (macOS arm64 or Windows x64, detected automatically)
+Usage: python3 fetch-deps.py            (macOS arm64, Windows x64 or Linux x64, detected automatically)
 """
 from pathlib import Path
 import hashlib, json, platform, shutil, subprocess, sys, tarfile, urllib.request, zipfile
@@ -16,7 +16,9 @@ def target():
         return 'darwin-arm64'
     if sys.platform == 'win32' and platform.machine().lower() in ('amd64', 'x86_64'):
         return 'win32-x64'
-    sys.exit(f'Unsupported build platform: {sys.platform} {platform.machine()} (supported: macOS arm64, Windows x64)')
+    if sys.platform.startswith('linux') and platform.machine() == 'x86_64':
+        return 'linux-x64'
+    sys.exit(f'Unsupported build platform: {sys.platform} {platform.machine()} (supported: macOS arm64, Windows x64, Linux x64)')
 
 
 def fetch(url, sha256, destination):
@@ -53,6 +55,9 @@ def main():
     if name.startswith('darwin'):
         # The macOS app bundle relies on framework symlinks, which zipfile does not restore.
         subprocess.run(['ditto', '-x', '-k', str(archive), str(destination)], check=True)
+    elif name.startswith('linux'):
+        # zipfile drops the executable bits Electron needs.
+        subprocess.run(['unzip', '-q', str(archive), '-d', str(destination)], check=True)
     else:
         with zipfile.ZipFile(archive) as z:
             z.extractall(destination)

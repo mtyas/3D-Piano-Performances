@@ -4,7 +4,7 @@ A live 3D/WebXR piano concert stage. A pianist plays a MIDI keyboard. Visitors w
 
 - **Visitors** open a web page. No account or install is needed. They watch live shows or replay archived ones in 3D or VR.
 - **The performer** signs in backstage, connects a MIDI keyboard, webcams and audio, then starts a live show. Each show is recorded to the archive automatically.
-- **Performer Studio** (optional desktop app for macOS and Windows) adds a native audio mixer with VST3 instruments and effects (for example Pianoteq and UAD), feeding the stage.
+- **Performer Studio** (optional desktop app for Windows, macOS and Linux) adds a native audio mixer with VST3 instruments and effects (for example Pianoteq and UAD), feeding the stage.
 
 ![The concert hall replaying a recorded performance, with in-world screens showing concert, portrait and hands views](docs/images/stage-replay.jpg)
 
@@ -22,7 +22,12 @@ A live 3D/WebXR piano concert stage. A pianist plays a MIDI keyboard. Visitors w
 | `setup/` | One-step setup and start scripts for the server (macOS, Linux, Windows) |
 | `deploy/` | Docker Compose, Caddy and Nginx examples for hosting on the internet |
 | `desktop-performer/` | Source for the Performer Studio desktop app (JUCE audio engine + Electron) |
+| `.github/workflows/release.yml` | Builds the release downloads on GitHub for Windows, macOS and Linux |
 | `docs/` | Setup guides |
+
+## Download
+
+Ready-made builds are on the [Releases page](https://github.com/mtyas/3D-Piano-Performances/releases): the stage server bundle, and Performer Studio for Windows, macOS (Apple Silicon) and Linux. You can also run everything straight from this repository, as described below.
 
 ## Quick start: run the stage on your computer
 
@@ -47,7 +52,7 @@ Open <http://localhost:8765>. The setup script prints your private performer pas
 
 - [Server setup](docs/server-setup.md): local test, home server, Docker, HTTPS and putting the stage on the internet.
 - [Performer setup](docs/performer-setup.md): MIDI keyboard, webcams, audio, going live and managing recordings.
-- [Performer Studio desktop app](docs/desktop-studio.md): the native mixer for macOS and Windows, and building it from source.
+- [Performer Studio desktop app](docs/desktop-studio.md): the native mixer for Windows, macOS and Linux, and building it from source.
 - [Security](SECURITY.md): how sign-in, sessions and limits work.
 
 ## Browser support
