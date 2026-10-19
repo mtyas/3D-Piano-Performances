@@ -17,11 +17,13 @@ You can perform from **a browser** (Chrome or Edge) or from the **Performer Stud
 
 Only one performer can be connected at a time.
 
+![Performer Studio after sign-in: live show, demo, MIDI and webcam controls on the left; camera presets at the top; the 88-key ribbon at the bottom](images/performer-studio.jpg)
+
 ## 1. MIDI keyboard
 
-Connect the keyboard before opening the page and allow MIDI access when the browser asks. Choose it in the MIDI section; the badge shows **Ready** and the log shows incoming notes. The avatar's hands follow what you play, anticipating notes with a short look-ahead buffer.
+Connect the keyboard before opening the page and allow MIDI access when the browser asks. Choose it under **Hardware MIDI input**; the badge shows **Ready** and the log shows incoming notes. The avatar's hands follow what you play, anticipating notes with a short look-ahead buffer.
 
-No keyboard yet? **Demo** plays a short piece so you can check the stage.
+No keyboard yet? **▶ Play Two-Handed Concert Demo** plays a short piece so you can check the stage.
 
 ## 2. Webcams (optional)
 
@@ -49,7 +51,9 @@ Stop the show before closing the tab, so the recording is finalised.
 
 ## 5. Manage recordings
 
-**Manage recordings ↗** opens the archive manager. There you can rename, hide, delete (recoverable), export and import recordings.
+**Manage recordings ↗** opens the archive manager. There you can rename, hide, delete (recoverable), export and import recordings. Use ↑ and ↓ to set the order in the public lobby.
+
+![The archive manager](images/archive-manager.jpg)
 
 ## Tips
 

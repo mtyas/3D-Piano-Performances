@@ -6,6 +6,12 @@ A live 3D/WebXR piano concert stage. A pianist plays a MIDI keyboard. Visitors w
 - **The performer** signs in backstage, connects a MIDI keyboard, webcams and audio, then starts a live show. Each show is recorded to the archive automatically.
 - **Performer Studio** (optional desktop app for macOS and Windows) adds a native audio mixer with VST3 instruments and effects (for example Pianoteq and UAD), feeding the stage.
 
+![The concert hall replaying a recorded performance, with in-world screens showing concert, portrait and hands views](docs/images/stage-replay.jpg)
+
+| Visitor lobby | Performer controls |
+| --- | --- |
+| ![Lobby with live status and archived performances](docs/images/lobby.jpg) | ![Performer Studio panel with live show, MIDI and webcam controls](docs/images/performer-studio.jpg) |
+
 ## What's in this repository
 
 | Path | What it is |
@@ -32,6 +38,10 @@ You need [Python 3.9 or later](https://www.python.org/downloads/).
 **Windows:** double-click `setup\setup-server.cmd`, then `setup\run-server.cmd`.
 
 Open <http://localhost:8765>. The setup script prints your private performer password. Use it with **Performer Studio → Sign in** on the stage page.
+
+## Performer Studio desktop app
+
+![Performer Studio mixer with piano, microphone, two aux returns and master](docs/images/mixer.jpg)
 
 ## Guides
 

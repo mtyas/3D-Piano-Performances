@@ -5,6 +5,8 @@ Performer Studio is an optional desktop app for the performer. It has two tabs t
 - **Performer:** the normal stage page, with sign-in, webcams, live show and archive controls.
 - **Mixer:** a native audio console that hosts your VST3 plug-ins. It has a piano instrument channel and a microphone channel, two inserts per channel, two stereo aux buses (two inserts each) and two master inserts. It also has stereo meters, mute, solo, pan/balance, bypass and a separate headphone level.
 
+![The Mixer tab with Pianoteq on the piano channel, a channel strip on the microphone, a plate reverb on Aux 1 and a bus compressor on the master](images/mixer.jpg)
+
 The master output feeds the live stream and recording directly. No virtual audio cable or loopback device is needed.
 
 Status: **0.1 preview.** The macOS Apple Silicon build is tested with Pianoteq 9 and UADx plug-ins. The Windows x64 build adds ASIO, Windows Audio (WASAPI) and DirectSound support, but it has not yet been tested on Windows hardware. Please report issues.

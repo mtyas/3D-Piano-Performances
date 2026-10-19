@@ -25,7 +25,11 @@ It then:
 
 `.performer-password`, `server.env` and `archives/` are private and listed in `.gitignore`. Never commit them.
 
-Open <http://localhost:8765>. You will see the lobby with two demo recordings. Click **Enter Performer Studio →** and sign in with the password.
+Open <http://localhost:8765>. You will see the lobby with two demo recordings.
+
+![The lobby on a fresh install, with two demo recordings](images/lobby.jpg)
+
+ Click **Enter Performer Studio →** and sign in with the password.
 
 Non-interactive setup (for scripts or servers):
 
@@ -99,6 +103,8 @@ The password file is mounted as a Docker secret, and recordings are kept in the 
 ## 6. Recordings and backups
 
 Every live show is saved to `ARCHIVE_DIR` as `session_*.json` (MIDI, body pose, timing) plus `session_*.webm` (audio). Signed-in performers can rename, hide, delete, restore, export and import recordings at `/archive-admin.html` (**Manage recordings ↗** in Performer Studio).
+
+![The archive manager](images/archive-manager.jpg)
 
 Back up the archive folder and `.performer-password`. Recordings are held in memory while a show runs (up to 256 MB), so leave a margin of RAM and keep an eye on disk space.
 
