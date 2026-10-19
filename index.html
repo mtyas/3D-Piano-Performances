@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Piano Concert Hall</title>
+  <style>
+    :root {
+      --bg-panel: rgba(14, 16, 22, 0.86);
+      --bg-card: rgba(22, 25, 34, 0.78);
+      --border: rgba(255, 255, 255, 0.13);
+      --accent: #f59e0b;
+      --accent-hover: #fbbf24;
+      --accent-blue: #38bdf8;
+      --green: #22c55e;
+      --red: #ef4444;
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body {
+      background: #0b0d12;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+    #canvas-container {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* =========================================================================
+       VIEW MODE VISIBILITY RULES (lobby | visitor | performer)
+       ========================================================================= */
+    body.mode-lobby .topbar,
+    body.mode-lobby .side-panel,
+    body.mode-lobby .piano-dock,
+    body.mode-lobby .visitor-bottom-bar,
+    body.mode-lobby .webcam-pip {
+      display: none !important;
+    }
+    body.mode-visitor #landing-overlay,
+    body.mode-visitor .side-panel,
+    body.mode-visitor .piano-dock,
+    body.mode-visitor .webcam-pip,
+    body.mode-visitor .performer-only {
+      display: none !important;
+    }
+    body.mode-performer #landing-overlay,
+    body.mode-performer .visitor-only {
+      display: none !important;
+    }
+
+    /* =========================================================================
+       1. LANDING PAGE / CONCERT LOBBY OVERLAY
+       ========================================================================= */
+    #landing-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 40;
+      background: radial-gradient(circle at 50% 30%, rgba(11, 13, 19, 0.55), rgba(8, 10, 15, 0.92));
+      backdrop-filter: blur(8px);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px 60px;
+    }
+    .lobby-container {
+      width: 100%;
+      max-width: 960px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .hero-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .hero-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .hero-title {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.8;
+    }
+    .hero-subtitle {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+      max-width: 680px;
+    }
+    .concept-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .pill {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 11px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      color: #d1d5db;
+    }
+    .live-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding: 18px 22px;
+      border-radius: 14px;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.35);
+    }
+    .live-banner.standby {
+      background: rgba(245, 158, 11, 0.08);
+      border-color: rgba(245, 158, 11, 0.28);
+    }
+    .live-banner-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .live-banner-title {
+      font-size: 15px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .live-banner-sub {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .cta-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Archive Section */
+    .archive-section {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .archive-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .archive-header h2 {
+      font-size: 17px;
+      font-weight: 700;
+    }
+    .archive-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(275px, 1fr));
+      gap: 14px;
+    }
+    .archive-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .archive-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(245, 158, 11, 0.5);
+    }
+    .archive-card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .archive-meta {
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* Performer Backstage Card */
+    .performer-login-card {
+      background: rgba(14, 16, 22, 0.75);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+    .login-form {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    input[type="password"], input[type="text"] {
+      background: rgba(0, 0, 0, 0.55);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 7px 11px;
+      border-radius: 8px;
+      font-size: 12px;
+      outline: none;
+      user-select: text;
+    }
+    input[type="password"]:focus, input[type="text"]:focus {
+      border-color: var(--accent);
+    }
+    .login-error {
+      font-size: 11px;
+      color: #f87171;
+      display: none;
+    }
+
+    /* =========================================================================
+       2. TOP BAR & BUTTONS (VISITOR MINIMAL HUD & PERFORMER BAR)
+       ========================================================================= */
+    .topbar {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      right: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      pointer-events: none;
+      z-index: 10;
+      flex-wrap: wrap;
+    }
+    .topbar > * { pointer-events: auto; }
+    .brand-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-panel);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      padding: 7px 12px;
+      border-radius: 12px;
+    }
+    .brand-title {
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.02em;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--muted);
+    }
+    .badge.live {
+      background: rgba(34, 197, 94, 0.16);
+      color: #86efac;
+      border: 1px solid rgba(34, 197, 94, 0.35);
+    }
+    .badge.rec {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.45);
+    }
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+    .badge.live .dot {
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+    }
+    .badge.rec .dot {
+      background: var(--red);
+      box-shadow: 0 0 8px var(--red);
+    }
+    .cam-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-panel);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      padding: 6px 10px;
+      border-radius: 12px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 6px 11px;
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:hover { background: rgba(255, 255, 255, 0.15); }
+    .btn.active, .btn.primary {
+      background: var(--accent);
+      color: #111;
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+    .btn.danger {
+      background: var(--red);
+      color: #fff;
+      border-color: var(--red);
+      font-weight: 600;
+    }
+    .btn.vr-btn {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border-color: #8b5cf6;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    /* =========================================================================
+       3. VISITOR MINIMAL BOTTOM TRANSPORT & SOUND BAR
+       ========================================================================= */
+    .visitor-bottom-bar {
+      position: absolute;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-panel);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      z-index: 15;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      max-width: 92vw;
+      flex-wrap: wrap;
+    }
+    .replay-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .scrubber {
+      width: 180px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .time-label {
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+      color: var(--muted);
+      min-width: 72px;
+    }
+
+    /* =========================================================================
+       4. PERFORMER STUDIO LEFT SIDEBAR & BOTTOM 88-KEY DOCK
+       ========================================================================= */
+    .side-panel {
+      position: absolute;
+      top: 64px;
+      left: 14px;
+      width: 315px;
+      max-height: calc(100vh - 172px);
+      overflow-y: auto;
+      background: var(--bg-panel);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 10;
+    }
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      padding-bottom: 11px;
+      border-bottom: 1px solid var(--border);
+    }
+    .control-group:last-child { border-bottom: none; padding-bottom: 0; }
+    select {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 6px 8px;
+      font-size: 12px;
+    }
+    .slider-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted);
+      gap: 8px;
+    }
+    .slider-row input[type="range"] {
+      flex: 1;
+      accent-color: var(--accent);
+    }
+    .status-line {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    /* Dual Webcam PiP Preview Dock (Front + Optional Side Profile) */
+    .webcam-pip-dock {
+      position: absolute;
+      bottom: 112px;
+      right: 14px;
+      display: flex;
+      gap: 10px;
+      z-index: 10;
+      pointer-events: none;
+    }
+    .webcam-pip {
+      position: relative;
+      width: 224px;
+      height: 168px;
+      background: #000;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      display: none;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.65);
+    }
+    .webcam-pip.visible { display: block; }
+    .webcam-pip video, .webcam-pip canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+    .webcam-label {
+      position: absolute;
+      bottom: 6px;
+      left: 8px;
+      right: 8px;
+      font-size: 10px;
+      background: rgba(0,0,0,0.72);
+      padding: 2px 7px;
+      border-radius: 4px;
+      color: #86efac;
+      z-index: 2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Bottom 88-Key Interactive Ribbon (Performer Studio) */
+    .piano-dock {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 96px;
+      background: linear-gradient(to top, rgba(10, 12, 16, 0.96), rgba(16, 18, 24, 0.85));
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 6px 14px 8px;
+      z-index: 10;
+    }
+    .dock-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+    .legend {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .legend span { display: inline-flex; align-items: center; gap: 5px; }
+    .swatch { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+    .keyboard-2d {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      background: #08090c;
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .key-2d {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      border: 1px solid #222;
+      border-radius: 0 0 3px 3px;
+      background: #f5f5f0;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 3px;
+      font-size: 8px;
+      font-weight: 700;
+      color: #555;
+      transition: background 0.05s;
+    }
+    .key-2d.black {
+      height: 62%;
+      background: #18181b;
+      border-color: #000;
+      z-index: 2;
+      color: #aaa;
+    }
+    .key-2d.active-left {
+      background: var(--accent-blue) !important;
+      color: #000 !important;
+      box-shadow: 0 0 10px var(--accent-blue);
+    }
+    .key-2d.active-right {
+      background: var(--accent) !important;
+      color: #000 !important;
+      box-shadow: 0 0 10px var(--accent);
+    }
+
+    #loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(11, 13, 18, 0.94);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      z-index: 100;
+      font-size: 14px;
+    }
+    .spinner {
+      width: 34px;
+      height: 34px;
+      border: 3px solid rgba(255,255,255,0.15);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+<style>
+#review-tools { display:none; }
+/* Keep all studio controls within one scrollable column. */
+body.mode-performer { --studio-width:min(370px,calc(100vw - 28px)); }
+body.mode-performer #studio-panel {
+ position:fixed; top:var(--studio-top,78px);
+ bottom:calc(var(--piano-dock-height,96px) + 14px); width:var(--studio-width);
+ max-height:none; min-height:0; padding:16px; gap:16px;
+ overflow-y:auto; overflow-x:hidden; scrollbar-gutter:stable; overscroll-behavior:contain;
+}
+#studio-panel > * { flex-shrink:0; min-width:0; }
+#studio-panel::-webkit-scrollbar { width:8px; }
+#studio-panel::-webkit-scrollbar-thumb { background:#ffffff40; border-radius:8px; }
+#studio-panel::-webkit-scrollbar-track { background:#ffffff08; }
+#studio-panel .control-group { min-width:0; gap:9px; padding-bottom:16px; }
+#studio-panel .section-title { flex-wrap:wrap; gap:4px 12px; line-height:1.5; }
+#studio-panel input:not([type=range]),#studio-panel select { width:100%; min-width:0; min-height:36px; }
+#studio-panel .btn { min-height:36px; white-space:normal; overflow-wrap:anywhere; }
+#studio-panel .status-line { overflow-wrap:anywhere; }
+#studio-panel .slider-row { display:grid; grid-template-columns:100px minmax(0,1fr); gap:12px; }
+#studio-panel input[type=range] { min-width:0; width:100%; }
+#studio-panel .tracking-actions { display:grid; grid-template-columns:minmax(0,1.6fr) minmax(0,1fr); gap:8px; }
+#studio-panel .tracking-actions .btn { justify-content:center; }
+body.mode-performer #stage-direction { display:none!important; }
+body.mode-performer .webcam-pip-dock {
+ position:fixed; bottom:calc(var(--piano-dock-height,96px) + 14px);
+ width:min(460px,calc(100vw - var(--studio-width) - 42px));
+ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; z-index:20;
+}
+body.mode-performer .webcam-pip-dock:not(:has(#webcam-pip-side.visible)) {
+ grid-template-columns:1fr; width:min(280px,calc(100vw - var(--studio-width) - 42px));
+}
+body.mode-performer .webcam-pip { width:100%; height:auto; aspect-ratio:4/3; }
+@media(max-width:700px) {
+ body.mode-performer #studio-panel { bottom:calc(var(--piano-dock-height,96px) + var(--studio-cameras-height,0px) + 28px); }
+ body.mode-performer .webcam-pip-dock,body.mode-performer .webcam-pip-dock:not(:has(#webcam-pip-side.visible)) {
+  width:min(460px,calc(100vw - 28px));
+ }
+ body.mode-performer .brand-bar { flex-wrap:wrap; }
+ body.mode-performer .cam-bar { gap:4px; }
+ body.mode-performer .cam-bar .btn { padding:5px 7px; }
+}
+#visitor-controls-toggle { display:none; position:fixed; left:18px; bottom:18px; z-index:60; background:#10151dbb; }
+body.mode-visitor #visitor-controls-toggle { display:flex; }
+body.mode-visitor:not(.visitor-controls-open) .topbar,
+body.mode-visitor:not(.visitor-controls-open) .visitor-bottom-bar,
+body.mode-visitor:not(.visitor-controls-open) #stage-direction { display:none!important; }
+body.mode-visitor .visitor-bottom-bar { bottom:70px; left:18px; right:18px; transform:none; max-width:none; }
+body.mode-visitor #stage-direction { bottom:150px!important; }
+body.mode-visitor #visitor-mode-badge { display:none; }
+
+@media(max-width:650px) { body.mode-visitor #stage-direction { bottom:230px!important; } .brand-bar,.cam-bar { flex-wrap:wrap; } }
+
+/* One visitor control surface, with secondary choices disclosed on demand. */
+#visitor-hud { display:none; }
+body.mode-visitor.visitor-controls-open #visitor-hud {
+ display:flex; flex-direction:column; gap:16px; position:fixed; z-index:55;
+ left:18px; bottom:68px; width:min(370px,calc(100vw - 36px));
+ max-height:calc(100dvh - 94px); overflow:auto; box-sizing:border-box;
+ padding:20px; border:1px solid #ffffff24; border-radius:18px;
+ background:rgba(17,21,29,.96); box-shadow:0 16px 48px #0007; backdrop-filter:blur(18px);
+ color:#edf0f5; font:13px system-ui;
+}
+body.mode-visitor .topbar { display:none!important; }
+#visitor-hud .brand-bar { display:flex; flex-direction:column; align-items:flex-start; gap:10px;
+ padding:0; background:none; border:0; box-shadow:none; width:100%; box-sizing:border-box; }
+#visitor-hud .brand-title { font-size:16px; line-height:1.4; white-space:normal; overflow-wrap:anywhere; }
+#visitor-hud #btn-back-lobby { order:-1; background:none; border:0; padding:0; min-height:32px; color:#b9c0cc; }
+#visitor-hud #ws-badge,#visitor-hud #visitors-badge { display:none; }
+body.mode-visitor #visitor-hud .visitor-bottom-bar {
+ position:static; display:flex; flex-direction:column; align-items:stretch; transform:none;
+ margin:0; padding:0; gap:14px; border:0; background:none; box-shadow:none; backdrop-filter:none;
+ width:100%; max-width:none;
+}
+#visitor-hud #replay-transport { flex-wrap:wrap; gap:10px; }
+#visitor-hud #replay-scrubber { flex:1; min-width:100px; width:auto; }
+#visitor-hud #replay-time { width:100%; text-align:right; }
+#visitor-hud #visitor-archive-select { width:100%!important; max-width:none!important; min-height:40px; }
+#visitor-hud #sl-visitor-volume { flex:1; min-width:0; }
+#visitor-hud details { border-top:1px solid #ffffff18; padding-top:12px; }
+#visitor-hud summary { cursor:pointer; font-weight:600; padding:3px 0; min-height:28px; }
+#visitor-hud details > button { margin-top:10px; width:100%; }
+#visitor-hud details > button[aria-pressed=true] { background:var(--accent); color:#17120b; }
+#visitor-hud summary::marker { color:#b6a17b; }
+#visitor-hud .cam-bar { display:grid; grid-template-columns:1fr 1fr; gap:8px; background:none;
+ border:0; padding:10px 0 0; box-shadow:none; width:100%; }
+#visitor-hud .btn { min-height:36px; }
+#visitor-hud .cam-bar .btn { white-space:normal; }
+body.mode-visitor #visitor-hud #stage-direction {
+ position:static!important; display:flex; flex-direction:column; align-items:stretch;
+ max-width:none; margin:0; padding:10px 0 0; gap:12px; border:0; border-radius:0; background:none;
+}
+#visitor-hud #stage-direction label { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+#visitor-hud #stage-direction select { width:60%; min-height:36px; }
+#visitor-hud :focus-visible { outline:2px solid #e6b453; outline-offset:3px; }
+@media(max-width:650px) {
+ body.mode-visitor.visitor-controls-open #visitor-hud { left:10px; bottom:64px; width:calc(100vw - 20px);
+ max-height:calc(100dvh - 82px); padding:16px; gap:12px; }
+ #visitor-controls-toggle { left:10px; bottom:12px; }
+}
+
+</style></head>
+<body class="mode-lobby">
+  <div id="loading-overlay">
+    <div class="spinner"></div>
+    <div id="loading-text">Loading Rigged Avatar & 88-Key Concert Piano (concert_stage.glb)…</div>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <!-- =========================================================================
+       1. VISITOR & PERFORMER LANDING PAGE (CONCERT HALL LOBBY)
+       ========================================================================= -->
+  <div id="landing-overlay">
+    <div class="lobby-container">
+      <!-- Hero & Concept Explanation -->
+      <div class="hero-card">
+        <div class="hero-top">
+          <div>
+            <div style="margin-bottom: 6px;">
+            </div>
+            <div class="hero-title">🎹 Live 3D Avatar Piano Concert Hall</div>
+          </div>
+          <div class="badge live" id="lobby-ws-badge">
+            <span class="dot"></span>
+            <span id="lobby-ws-text">Stage Connected</span>
+          </div>
+        </div>
+
+        <p class="hero-subtitle">
+          Experience a live or archived piano recital in full 3D and WebXR. During a live broadcast, the pianist performs on a physical 88-key MIDI grand piano while filmed by a webcam—driving a custom-rigged 3D likeness with 10-finger inverse kinematics and upper-body motion capture. Visitor streams use a <b>1.8-second look-ahead buffer</b> so the avatar's hands and arms naturally anticipate upcoming chords and melodies before striking the keys.
+        </p>
+
+        <div class="concept-pills">
+          <span class="pill">🎹 88-Key MIDI Finger & Arm IK</span>
+          <span class="pill">⏳ 1.8s Look-Ahead Hand Anticipation</span>
+          <span class="pill">📷 Live Webcam Pose & Face Capture</span>
+          <span class="pill">🔊 Synchronized Concert Audio & Synth</span>
+          <span class="pill">🥽 Browser & WebXR VR Ready</span>
+        </div>
+
+        <!-- Live Show Status & Visitor Entry CTA -->
+        <div class="live-banner standby" id="lobby-live-banner">
+          <div class="live-banner-info">
+            <div class="live-banner-title" id="lobby-live-title">
+              <span>🌙 Stage Standby — No Live Broadcast Right Now</span>
+            </div>
+            <div class="live-banner-sub" id="lobby-live-sub">
+              You can enter the 3D stage to look around in free camera / VR, or replay any archived concert below.
+            </div>
+          </div>
+          <div class="cta-group">
+            <button class="btn primary" id="btn-enter-visitor" style="padding: 10px 18px; font-size: 13px;">
+              🏛️ Enter 3D Stage as Visitor
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Archived Concerts Library -->
+      <div class="archive-section">
+        <div class="archive-header">
+          <div>
+            <h2>📼 Archived Concert Performances</h2>
+            <div class="status-line">
+              Every performance records synchronized audio, 88-key MIDI, and body motion—replayed with full look-ahead hand anticipation.
+            </div>
+          </div>
+        </div>
+        <div class="archive-grid" id="archive-grid">
+          <!-- Populated dynamically from /api/archives -->
+        </div>
+      </div>
+
+      <!-- Performer Backstage Password Entry -->
+      <div class="performer-login-card">
+        <div>
+          <div style="font-size: 14px; font-weight: 700;">🔑 Performer Studio Backstage</div>
+          <div class="status-line">
+            Performer login unlocks the MIDI keyboard input, MediaPipe webcam tracker, audio stream, and live show recorder.
+          </div>
+        </div>
+        <div class="login-form">
+          <input type="password" id="performer-password" placeholder="Performer password" autocomplete="current-password" aria-label="Performer password" />
+          <button class="btn" id="btn-performer-login">Enter Performer Studio →</button>
+          <span class="login-error" id="login-error">Incorrect password</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       2. TOP BAR (Minimal in Visitor Mode, Full in Performer Mode)
+       ========================================================================= -->
+  <div class="topbar">
+    <div class="brand-bar">
+      <button class="btn" id="btn-back-lobby" title="Return to Concert Lobby & Archives">
+        ← Lobby & Archives
+      </button>
+      <span class="brand-title" id="stage-header-title">🎹 Live Concert</span>
+      <div class="badge live" id="ws-badge">
+        <span class="dot"></span>
+        <span id="ws-status-text">Live</span>
+      </div>
+      <div class="badge" id="visitors-badge">👥 0 Visitors</div>
+    </div>
+
+    <div class="cam-bar">
+      <button class="btn" data-cam="stage">Stage &amp; Screens</button>
+      <button class="btn active" data-cam="3q">Concert 3/4</button>
+      <button class="btn" data-cam="hands">Hands & Keys</button>
+      <button class="btn" data-cam="face">Face Portrait</button>
+      <button class="btn" data-cam="overhead">Overhead 88-Key</button>
+      <button class="btn" data-cam="pov">Pianist POV</button>
+      <button class="btn vr-btn" id="btn-vr">🥽 Enter VR</button>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       3. VISITOR MINIMAL BOTTOM BAR (Camera/Sound + Archive Replay Transport)
+       ========================================================================= -->
+  <div class="visitor-bottom-bar visitor-only">
+    <div class="badge live" id="visitor-mode-badge">
+      <span class="dot"></span>
+      <span id="visitor-mode-text">⏳ 1.8s Look-Ahead Buffer</span>
+    </div>
+
+    <!-- Shown when replaying an archived session -->
+    <div class="replay-controls" id="replay-transport" style="display: none;">
+      <button class="btn primary" id="btn-replay-playpause">⏸ Pause</button>
+      <input type="range" class="scrubber" id="replay-scrubber" min="0" max="1000" value="0" />
+      <span class="time-label" id="replay-time">0:00 / 0:00</span>
+    </div>
+
+    <select id="visitor-archive-select" style="width: auto; max-width: 220px;">
+      <option value="">Switch Archived Performance…</option>
+    </select>
+
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <button class="btn" id="btn-visitor-mute" title="Mute / Unmute">🔊</button>
+      <input type="range" id="sl-visitor-volume" min="0" max="100" value="80" style="width: 90px; accent-color: var(--accent);" />
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       4. PERFORMER STUDIO LEFT SIDEBAR (Only visible in Performer Mode)
+       ========================================================================= -->
+  <div class="side-panel performer-only" id="studio-panel">
+    <!-- 0. Live Show Broadcast & Archive Recorder -->
+    <div class="control-group">
+      <div class="section-title">
+        <span>🔴 Live Broadcast & Archive</span>
+        <span id="rec-timer" style="color: #fca5a5; font-variant-numeric: tabular-nums;">Standby</span>
+      </div>
+      <input type="text" id="show-title-input" placeholder="Session Title (e.g. Evening Nocturne)" value="Live Evening Recital" />
+      <button class="btn primary" id="btn-record-show" style="width: 100%; justify-content: center; padding: 8px;">
+        ⏺ Start Live Show & Record to Archive
+      </button>
+      <div class="status-line" id="rec-status-line">
+        Broadcasts live to visitors (with 1.8s look-ahead buffer) and saves Audio + MIDI + Pose to the Archive when stopped.
+      </div>
+    </div>
+
+    <a class="btn" href="./archive-admin.html" target="_blank" rel="noopener">Manage recordings ↗</a>
+    <!-- 1. Concert Demo & Quick Test -->
+    <div class="control-group" id="group-demo">
+      <div class="section-title">
+        <span>1. Built-in Sequencer / Test</span>
+        <span id="note-indicator" style="color: var(--accent);">Idle</span>
+      </div>
+      <button class="btn" id="btn-demo" style="width:100%; justify-content:center; padding:7px;">
+        ▶ Play Two-Handed Concert Demo
+      </button>
+      <div class="status-line">
+        Play on your MIDI keyboard, click the 88 keys below, press Mac keys <b>A–L / W–P</b>, or run the demo piece.
+      </div>
+    </div>
+
+    <!-- 2. MIDI Keyboard Input (Performer) -->
+    <div class="control-group">
+      <div class="section-title">
+        <span>2. Hardware MIDI Input</span>
+        <span id="midi-badge" style="color:#86efac;">Ready</span>
+      </div>
+      <select id="midi-select">
+        <option value="">All Connected MIDI Inputs</option>
+      </select>
+      <div class="status-line" id="midi-log">Waiting for MIDI input…</div>
+    </div>
+
+    <!-- 3. Dual-Webcam Body & Face Tracking (Performer: Front + Side Profile) -->
+    <div class="control-group">
+      <div class="section-title">
+        <span>3. Dual-Webcam 3D Motion</span>
+        <span id="webcam-fps">Off</span>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:5px;">
+        <select id="webcam-front-select" title="Front Camera (Yaw, Roll, Sway, Shoulders, Face)">
+          <option value="">Front Cam: Default Camera</option>
+        </select>
+        <select id="webcam-side-select" title="Optional 2nd Side Profile Camera (True Forward Lean, Spine Arch, Head Pitch)">
+          <option value="">Side Cam: None (1-Cam Mode)</option>
+        </select>
+        <select id="webcam-side-orient" title="Which side of the piano is the 2nd webcam placed on?">
+          <option value="auto">Side Cam Profile: Auto-Detect Facing</option>
+          <option value="left">Side Cam on Left (Facing Right)</option>
+          <option value="right">Side Cam on Right (Facing Left)</option>
+        </select>
+      </div>
+      <div class="slider-row">
+        <label for="motion-gain">Body expression</label>
+        <input id="motion-gain" type="range" min="0.75" max="2" step="0.05" value="1.5" aria-label="Body movement strength" />
+      </div>
+      <div class="status-line">Keep shoulders, elbows and wrists visible. Free hands follow your gestures; playing hands return to their notes.</div>
+      <div class="tracking-actions">
+        <button class="btn" id="btn-webcam">
+          📷 Start Tracking
+        </button>
+        <button class="btn" id="btn-webcam-calibrate" title="Zero current posture as neutral sitting reference">
+          🎯 Zero Sit
+        </button>
+      </div>
+      <div class="slider-row">
+        <span>Head Yaw</span>
+        <input type="range" id="sl-yaw" min="-35" max="35" value="0" />
+      </div>
+      <div class="slider-row">
+        <span>Head Pitch</span>
+        <input type="range" id="sl-pitch" min="-25" max="30" value="0" />
+      </div>
+      <div class="slider-row">
+        <span>Torso Sway</span>
+        <input type="range" id="sl-sway" min="-15" max="15" value="0" />
+      </div>
+      <div class="slider-row">
+        <span>Torso Lean</span>
+        <input type="range" id="sl-lean" min="-12" max="18" value="0" />
+      </div>
+      <div class="slider-row">
+        <span>Spine Arch</span>
+        <input type="range" id="sl-arch" min="-10" max="15" value="0" />
+      </div>
+    </div>
+
+    <!-- 4. Audio Engine & Live Stream -->
+    <div class="control-group">
+      <div class="section-title">
+        <span>4. Concert Audio & Stream</span>
+        <span id="audio-status" style="color:#86efac;">Synth On</span>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button class="btn active" id="btn-synth-toggle" style="flex:1; justify-content:center;">
+          🔊 Piano Synth
+        </button>
+        <button class="btn" id="btn-mic-stream" style="flex:1; justify-content:center;">
+          🎙️ Stream Audio In
+        </button>
+      </div>
+      <select id="audio-input-select">
+        <option value="">Default Audio Input (Pianoteq / Interface)</option>
+      </select>
+      <div class="slider-row">
+        <span>Master Vol</span>
+        <input type="range" id="sl-volume" min="0" max="100" value="80" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Dual Webcam PiP Overlay Dock (Front + Optional Side Profile) -->
+  <div class="webcam-pip-dock" id="webcam-pip-dock">
+    <div class="webcam-pip" id="webcam-pip">
+      <video id="webcam-video" autoplay playsinline muted></video>
+      <canvas id="webcam-canvas"></canvas>
+      <div class="webcam-label" id="webcam-label">Front Cam: Pose + Face</div>
+    </div>
+    <div class="webcam-pip" id="webcam-pip-side">
+      <video id="webcam-video-side" autoplay playsinline muted></video>
+      <canvas id="webcam-canvas-side"></canvas>
+      <div class="webcam-label" id="webcam-label-side">Side Cam: Sagittal Spine + Pitch</div>
+    </div>
+  </div>
+
+  <!-- Bottom 88-Key Interactive Piano Dock (Performer Studio) -->
+  <div class="piano-dock performer-only">
+    <div class="dock-header">
+      <span><b>88-Key MIDI Ribbon (A0 – C8)</b> — Click/drag keys or use computer keys <b>A S D F G H J K L</b> (Z/X octave)</span>
+      <div class="legend">
+        <span><i class="swatch" style="background:var(--accent-blue)"></i> Left Hand (Bass IK + Fingers 1–5)</span>
+        <span><i class="swatch" style="background:var(--accent)"></i> Right Hand (Treble IK + Fingers 1–5)</span>
+      </div>
+    </div>
+    <div class="keyboard-2d" id="keyboard-2d"></div>
+  </div>
+
+  <button class="btn" id="visitor-controls-toggle" aria-expanded="false">Concert controls</button>
+<script type="module" src="./app.js?v=9"></script>
+</body></html>

@@ -1,0 +1,17 @@
+# Private server data: never commit
+.performer-password
+server.env
+*.secret
+.env
+archives/
+
+# Local environments and build output
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+desktop-performer/build/
+desktop-performer/dist/
+desktop-performer/vendor/
+desktop-performer/shell/assets/
+desktop-performer/.test-data/

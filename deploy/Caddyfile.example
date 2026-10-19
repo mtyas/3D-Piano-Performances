@@ -1,0 +1,13 @@
+# Caddy obtains and renews the HTTPS certificate automatically.
+# Replace stage.example.com with your domain (its DNS must point at this machine),
+# and set PUBLIC_ORIGIN=https://stage.example.com for the stage server.
+stage.example.com {
+    reverse_proxy 127.0.0.1:8765
+}
+
+# To serve the stage under a path on an existing site instead (the server also answers on /piano/):
+# example.com {
+#     handle /piano* {
+#         reverse_proxy 127.0.0.1:8765
+#     }
+# }

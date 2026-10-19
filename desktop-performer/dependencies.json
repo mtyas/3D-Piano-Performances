@@ -1,0 +1,22 @@
+{
+  "juce": {
+    "version": "8.0.12",
+    "url": "https://github.com/juce-framework/JUCE/archive/refs/tags/8.0.12.tar.gz",
+    "sha256": "dec1a8baee5aaec4502b717a421b850e257ab7e9c2efd03766185ec1957cf102"
+  },
+  "electron": {
+    "version": "44.9.0",
+    "platforms": {
+      "darwin-arm64": {
+        "url": "https://github.com/electron/electron/releases/download/v44.9.0/electron-v44.9.0-darwin-arm64.zip",
+        "sha256": "12d873a5ae98a6598e730402e9278c5d132e97ea1a4405a7713bec2a3e83921f"
+      },
+      "win32-x64": {
+        "url": "https://github.com/electron/electron/releases/download/v44.9.0/electron-v44.9.0-win32-x64.zip",
+        "sha256": "88e08039d0ef359bab9f674e8051fa103bd8628ea7c5a5e1daaa610a8a0c6931"
+      }
+    }
+  },
+  "performerSource": "../app.js",
+  "performerSHA256": "5e59e48160baf4d53ea4503da1c8a5bc1363eb4158a5e07871626637b67dae70"
+}

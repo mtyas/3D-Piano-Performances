@@ -1,0 +1,18 @@
+# Nginx in front of the stage server. Provide your own certificate (e.g. with certbot).
+# Set PUBLIC_ORIGIN=https://stage.example.com for the stage server.
+server {
+    listen 443 ssl;
+    server_name stage.example.com;
+    ssl_certificate     /etc/letsencrypt/live/stage.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/stage.example.com/privkey.pem;
+
+    client_max_body_size 400m;   # archive imports can be up to 360 MB
+    location / {
+        proxy_pass http://127.0.0.1:8765;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;     # WebSocket for live shows
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_read_timeout 3600s;
+    }
+}

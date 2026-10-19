@@ -1,0 +1,23 @@
+const $=id=>document.getElementById(id);let recordings=[];let busy=false;
+function status(message){$('status').textContent=message;}
+async function api(path,options={}){const res=await fetch('./api/'+path,{credentials:'same-origin',...options,headers:{'Content-Type':'application/json',...options.headers}});const data=await res.json();if(!res.ok){if(res.status===401){$('manager').hidden=true;$('login').hidden=false;}throw Error(data.error||'Request failed');}return data;}
+async function task(work){if(busy)return;busy=true;document.querySelectorAll('button').forEach(b=>b.disabled=true);try{await work();}catch(e){status(e.message);}finally{busy=false;document.querySelectorAll('button').forEach(b=>b.disabled=false);}}
+async function refresh(){const data=await api('admin/archives');recordings=data.archives;$('manager').hidden=false;$('login').hidden=true;render();}
+function render(){const list=$('recordings');list.replaceChildren();for(const [index,recording] of recordings.entries()){
+ const row=document.createElement('article'),info=document.createElement('div'),title=document.createElement('h2'),meta=document.createElement('small'),actions=document.createElement('div');actions.className='actions';title.textContent=recording.title||'Untitled';meta.textContent=`${recording.hidden?'Hidden · ':''}${recording.createdAt||''} · ${Math.round((recording.durationMs||0)/1000)} sec · ${recording.noteCount||0} notes`;if(recording.hidden)meta.className='hidden';info.append(title,meta);row.append(info,actions);
+ function button(label,action){const b=document.createElement('button');b.textContent=label;b.onclick=()=>task(action);actions.append(b);return b;}
+ for(const [label,delta] of [['↑',-1],['↓',1]]){const b=button(label,async()=>{const next=index+delta;if(next<0||next>=recordings.length)return;const ids=recordings.map(r=>r.id);[ids[index],ids[next]]=[ids[next],ids[index]];await api('admin/archives/order',{method:'POST',body:JSON.stringify({ids})});await refresh();status('Archive order saved.');});b.setAttribute('aria-label',`${label==='↑'?'Move up':'Move down'} ${recording.title}`);}
+ button('Rename',async()=>{
+   const form=document.createElement('form'),input=document.createElement('input'),save=document.createElement('button'),cancel=document.createElement('button');
+   input.type='text';input.value=recording.title||'';input.maxLength=160;input.required=true;input.setAttribute('aria-label','Performance title');save.textContent='Save title';cancel.textContent='Cancel';cancel.type='button';
+   form.append(input,save,cancel);info.append(form);cancel.onclick=()=>form.remove();
+   form.onsubmit=e=>{e.preventDefault();task(async()=>{const title=input.value.trim();if(!title)throw Error('Enter a performance title.');await api('admin/archives/'+recording.id,{method:'PATCH',body:JSON.stringify({title})});await refresh();status('Performance renamed.');});};input.focus();input.select();
+ });
+ button(recording.hidden?'Show':'Hide',async()=>{await api('admin/archives/'+recording.id,{method:'PATCH',body:JSON.stringify({hidden:!recording.hidden})});await refresh();status('Visibility saved.');});
+ const exportLink=document.createElement('a');exportLink.textContent='Export';exportLink.className='link';exportLink.href='./api/admin/archives/'+recording.id+'/export';exportLink.download=recording.id+'.piano.json';actions.append(exportLink);
+ const del=button('Delete',async()=>{if(!confirm(`Move “${recording.title}” to private server trash?`))return;await api('admin/archives/'+recording.id,{method:'DELETE',body:'{}'});await refresh();status('Moved to private server trash.');});del.className='danger';list.append(row);
+ }if(!recordings.length){const p=document.createElement('p');p.textContent='No recordings yet.';list.append(p);}}
+$('login').onsubmit=e=>{e.preventDefault();task(async()=>{await api('login',{method:'POST',body:JSON.stringify({password:$('password').value})});$('password').value='';await refresh();status('Signed in.');});};
+$('refresh').onclick=()=>task(refresh);$('logout').onclick=()=>task(async()=>{await api('logout',{method:'POST',body:'{}'});recordings=[];$('recordings').replaceChildren();$('manager').hidden=true;$('login').hidden=false;status('Signed out.');});
+$('import').onchange=()=>task(async()=>{const file=$('import').files[0];if(!file)return;try{if(file.size>360*1024*1024)throw Error('Package exceeds the 360 MB limit.');status('Importing…');await api('admin/archives/import',{method:'POST',body:await file.text()});await refresh();status('Imported as hidden. Use Show when it is ready for visitors.');}finally{$('import').value='';}});
+refresh().catch(e=>{if(!e.message.includes('login'))status(e.message);});
