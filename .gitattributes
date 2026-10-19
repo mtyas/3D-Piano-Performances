@@ -1,0 +1,8 @@
+# Keep LF everywhere: the desktop packagers verify app.js by SHA-256, so a CRLF
+# checkout (Git's default on Windows) would change the pinned bytes.
+* text=auto eol=lf
+*.cmd text eol=crlf
+*.glb binary
+*.jpg binary
+*.png binary
+*.icns binary

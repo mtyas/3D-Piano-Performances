@@ -8,7 +8,8 @@ app=root/'dist'/'Performer Studio.app'
 source=root/'vendor/electron/Electron.app'
 manifest=json.loads((root/'dependencies.json').read_text())
 performer=(root/manifest['performerSource']).read_bytes()
-assert hashlib.sha256(performer).hexdigest()==manifest['performerSHA256'], 'Performer snapshot differs from the pinned integration source.'
+actual=hashlib.sha256(performer).hexdigest()
+assert actual==manifest['performerSHA256'], f"Performer snapshot differs from the pinned integration source ({actual} != {manifest['performerSHA256']}); check line endings."
 (root/'shell/assets').mkdir(exist_ok=True)
 (root/'shell/assets/app.js').write_bytes(performer)
 engine=root/'build/PerformerAudio_artefacts/Release/Performer Audio Engine.app'

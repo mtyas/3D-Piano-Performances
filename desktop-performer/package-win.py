@@ -10,7 +10,8 @@ root = Path(__file__).resolve().parent
 manifest = json.loads((root / 'dependencies.json').read_text())
 version = os.environ.get('PERFORMER_VERSION', '0.1.0')
 performer = (root / manifest['performerSource']).read_bytes()
-assert hashlib.sha256(performer).hexdigest() == manifest['performerSHA256'], 'Performer snapshot differs from the pinned integration source.'
+actual = hashlib.sha256(performer).hexdigest()
+assert actual == manifest['performerSHA256'], f"Performer snapshot differs from the pinned integration source ({actual} != {manifest['performerSHA256']}); check line endings."
 (root / 'shell/assets').mkdir(exist_ok=True)
 (root / 'shell/assets/app.js').write_bytes(performer)
 
