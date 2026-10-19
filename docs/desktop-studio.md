@@ -80,4 +80,4 @@ node tests/native-smoke.cjs     # offline engine test; needs Pianoteq 9 + UADx A
 
 ### Licensing note
 
-JUCE is dual-licensed (AGPLv3 or commercial), and the ASIO headers have their own licence (`vendor/JUCE-8.0.12/modules/juce_audio_devices/native/asio/LICENSE.txt`). Check both before distributing builds.
+The project is licensed under AGPL-3.0-or-later (see [LICENSE](../LICENSE)), which matches JUCE's open-source licence (AGPLv3). The ASIO interface headers bundled with JUCE are used under their GPLv3 option, which may be combined with AGPLv3 code. If you distribute builds, include the complete corresponding source, or a written offer for it, along with the licences that `package-mac.py` and `package-win.py` copy into the app. A closed-source build would need a commercial JUCE licence and a Steinberg ASIO licence.

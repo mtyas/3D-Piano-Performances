@@ -31,6 +31,8 @@ shutil.copytree(root / 'shell', resources / 'app')
 (resources / 'native').mkdir()
 shutil.copy2(engine, resources / 'native' / engine.name)
 shutil.copy2(root / f"vendor/JUCE-{manifest['juce']['version']}/LICENSE.md", resources / 'JUCE-LICENSE.md')
+shutil.copy2(root.parent / 'LICENSE', resources / 'LICENSE-AGPL-3.0.txt')
+shutil.copy2(root / f"vendor/JUCE-{manifest['juce']['version']}/modules/juce_audio_devices/native/asio/LICENSE.txt", resources / 'ASIO-LICENSE.txt')
 
 archive = shutil.make_archive(str(root / 'dist' / f'Performer-Studio-{version}-win-x64'), 'zip', app.parent, app.name)
 receipt = {'version': version, 'architecture': 'x64', 'signing': 'unsigned', 'folder': str(app), 'zip': archive,

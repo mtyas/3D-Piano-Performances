@@ -54,3 +54,11 @@ This release ships with one avatar, created as a likeness of the project's autho
 .venv/bin/python -m unittest discover -s tests -v      # server security and archive tests
 node tests/replay-timing.mjs && node tests/stage-asset-cache.mjs   # Node 22+
 ```
+
+## Licence
+
+3D Piano Performances is free software under the [GNU Affero General Public License v3.0 or later](LICENSE) (AGPL-3.0-or-later). This covers the code and the bundled assets, including the avatar.
+
+You may use, study, modify and share it. If you distribute it, or let people use a modified version over a network (for example by hosting your own stage), you must make your complete source code available under the same licence.
+
+AGPL is the open-source licence offered by [JUCE](https://juce.com), which the Performer Studio audio engine is built on. Using it for the whole project keeps everything compatible. Bundled third-party components keep their own licences: JUCE (AGPLv3), the Steinberg ASIO headers (GPLv3, used here under that option), Electron (MIT) and Three.js (MIT, loaded from a CDN).

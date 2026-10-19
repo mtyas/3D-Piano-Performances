@@ -20,6 +20,8 @@ resources=app/'Contents/Resources'
 (resources/'default_app.asar').unlink(missing_ok=True)
 shutil.copytree(root/'shell',resources/'app')
 shutil.copy2(root/'vendor/JUCE-8.0.12/LICENSE.md',resources/'JUCE-LICENSE.md')
+shutil.copy2(root.parent/'LICENSE',resources/'LICENSE-AGPL-3.0.txt')
+shutil.copy2(root/'vendor/JUCE-8.0.12/modules/juce_audio_devices/native/asio/LICENSE.txt',resources/'ASIO-LICENSE.txt')
 shutil.copy2(root/'shell/performer.icns',resources/'performer.icns')
 shutil.copytree(engine,resources/'native/Performer Audio Engine.app',symlinks=True)
 plist=app/'Contents/Info.plist'
